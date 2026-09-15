@@ -1,0 +1,24 @@
+# Local measurements and generated artifacts are intentionally not versioned.
+data/
+outputs/
+*.csv
+*.xlsx
+*.xls
+*.png
+*.jpg
+*.jpeg
+*.tif
+*.tiff
+*.npy
+*.npz
+*.pkl
+*.joblib
+
+# Python / IDE files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.idea/
+.vscode/
