@@ -1,8 +1,4 @@
-"""Dataset path definitions.
-
-Only paths and labels are defined here.  The held-out file is deliberately kept
-separate from ``training_files`` so the prediction pipeline cannot read it.
-"""
+"""Dataset paths and experiment definitions."""
 
 from __future__ import annotations
 
@@ -63,4 +59,3 @@ def resolve_dataset(name: str, data_root: str | Path) -> dict:
         "target_label": spec["target_label"],
         "target_file": root.joinpath(*spec["target"]),
     }
-

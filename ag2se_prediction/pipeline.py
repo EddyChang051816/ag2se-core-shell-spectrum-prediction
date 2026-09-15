@@ -1,10 +1,4 @@
-"""Physics-informed XGBoost spectrum prediction without target leakage.
-
-The public prediction API accepts training spectra and a numeric target label.
-It does not accept the target spectrum.  Model selection, physical-property
-extrapolation, residual gating, and post-processing decisions are made using
-leave-one-training-spectrum-out validation only.
-"""
+"""Physics-informed XGBoost pipeline for Ag2Se spectrum prediction."""
 
 from __future__ import annotations
 
@@ -177,7 +171,7 @@ def _preprocess_spectrum(path: str | Path, kind: str) -> ProcessedSpectrum:
 def prepare_training_bundle(
     training_files: Mapping[float, str | Path], kind: str
 ) -> TrainingBundle:
-    """Load training files only; a target/ground-truth path is not accepted."""
+    """Load and preprocess a collection of training spectra."""
     if len(training_files) < 3:
         raise ValueError("At least three training spectra are required")
     if kind not in PREPROCESS_PROFILES:
@@ -564,7 +558,7 @@ def predict_spectrum(
     lhs_samples: int = 24,
     device: str = "cpu",
 ) -> Prediction:
-    """Train and predict one held-out spectrum without reading its true curve."""
+    """Train the model and predict a spectrum at the requested label."""
     bundle = prepare_training_bundle(training_files, kind)
     target_label = float(target_label)
     if target_label in bundle.spectra:
@@ -614,7 +608,7 @@ def evaluate_prediction(
     target_file: str | Path,
     kind: str,
 ) -> dict[str, float]:
-    """Evaluate only after prediction; target data never enters model selection."""
+    """Compare a predicted spectrum with its reference measurement."""
     target = _preprocess_spectrum(target_file, kind)
     true_normalized = target.normalized
     predicted_normalized = np.clip(prediction.normalized_intensity, 0.0, 1.2)
@@ -634,4 +628,3 @@ def evaluate_prediction(
             else np.nan
         ),
     }
-

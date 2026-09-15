@@ -1,16 +1,14 @@
 # Ag2Se CORE / CORE-SHELL Spectrum Prediction
 
-這是整理後、可直接公開到 GitHub 的研究程式碼。模型以已知條件的 Ag2Se CORE 與 CORE-SHELL 光譜，預測未參與訓練之濃度比或 pH 條件下的完整光譜。
+本專案以已知條件的 Ag2Se CORE 與 CORE-SHELL 光譜，預測指定濃度比或 pH 條件下的完整光譜。
 
 需要 Python 3.10 或更新版本。
 
-## 無資料洩漏設計
+## 模型設計
 
-- `predict_spectrum()` 只接受訓練光譜路徑與目標數值，不接受 target/ground-truth 檔案。
-- 振幅、峰位、FWHM 策略與 XGBoost 超參數只用 training-only leave-one-spectrum-out cross-validation 選擇。
-- 沒有針對四個 holdout 個別設定的 `amp_boost`、`sharpen` 或人工校正係數。
-- 沒有 test oracle、test-based fine-tuning 或可切換回「偷吃步」模式的開關。
-- 真值只在預測完成後由 `evaluate_prediction()` 載入，用於計算結果，絕不回饋模型。
+- 以 leave-one-spectrum-out cross-validation 選擇振幅、峰位、FWHM 策略與 XGBoost 超參數。
+- 結合光譜前處理、physics-informed prior 與 XGBoost residual learning。
+- 支援 normalized 與 raw-scale 光譜輸出，以及獨立的模型評估流程。
 
 ## 方法
 
@@ -20,7 +18,7 @@
 4. 以 XGBoost 學習 leave-one-out prior residual；只有訓練端 CV 優於 prior 時才啟用 residual model。
 5. 套用由訓練端 CV 決定的 FWHM 處理，輸出 normalized 與 raw-scale 預測。
 
-這裡的 LHS 是標準的 training-only 超參數搜尋，不會查看 holdout 光譜，因此不是針對測試答案的人工微調。若要快速重現，可設 `--lhs-samples 0` 使用固定參數。
+LHS 用於交叉驗證超參數搜尋；若要快速執行，可設 `--lhs-samples 0` 使用固定參數。
 
 ## 安裝
 
@@ -61,7 +59,7 @@ python train.py --data-root "C:\path\to\訓練資料集" --dataset all
 python train.py --data-root "C:\path\to\訓練資料集" --dataset PH-SHELL --device cuda
 ```
 
-在真正未知、沒有 ground truth 的情境：
+只輸出預測結果：
 
 ```bash
 python train.py --data-root "C:\path\to\訓練資料集" --dataset PH-SHELL --no-evaluate
@@ -76,4 +74,4 @@ pip install -r requirements-dev.txt
 pytest -q
 ```
 
-測試會固定 strict API 邊界，避免日後把 target 檔案意外加入訓練函式。
+測試涵蓋主要訓練與預測介面。

@@ -14,7 +14,7 @@ from ag2se_prediction.pipeline import evaluate_prediction, predict_spectrum
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Leakage-free prediction of held-out Ag2Se PL/pH spectra."
+        description="Predict Ag2Se CORE and CORE-SHELL PL/pH spectra."
     )
     parser.add_argument("--data-root", type=Path, required=True, help="Local measurement-data root")
     parser.add_argument(
@@ -29,7 +29,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--no-evaluate",
         action="store_true",
-        help="Do not load held-out ground truth after prediction",
+        help="Save the prediction without calculating evaluation metrics",
     )
     return parser.parse_args()
 
@@ -54,7 +54,6 @@ def run_dataset(name: str, args: argparse.Namespace) -> None:
     if missing_training:
         raise FileNotFoundError("Missing training files:\n" + "\n".join(missing_training))
 
-    # Crucially, target_file is not passed to predict_spectrum.
     prediction = predict_spectrum(
         dataset["training_files"],
         dataset["kind"],
