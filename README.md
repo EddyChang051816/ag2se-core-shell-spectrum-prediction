@@ -1,26 +1,26 @@
-# Ag2Se 核心／核殼光譜預測
+# Ag2Se Core and Core-Shell Spectrum Prediction
 
-本專案利用已知條件下的 Ag2Se 核心（CORE）與核殼（CORE-SHELL）光譜，預測指定濃度比或 pH 條件下的完整光譜。
+This project predicts complete Ag2Se core and core-shell spectra at specified concentration ratios or pH values using spectra measured under known conditions.
 
-需要 Python 3.10 或更新版本。
+Python 3.10 or later is required.
 
-## 模型設計
+## Model Design
 
-- 使用留一光譜交叉驗證（leave-one-spectrum-out cross-validation），選擇振幅、峰位、半高全寬（FWHM）策略與 XGBoost 超參數。
-- 結合光譜前處理、物理資訊先驗模型與 XGBoost 殘差學習。
-- 支援正規化與原始尺度的光譜輸出，並提供獨立的模型評估流程。
+- Leave-one-spectrum-out cross-validation selects the amplitude, peak-position, and full width at half maximum (FWHM) strategies, along with the XGBoost hyperparameters.
+- Spectral preprocessing and a physics-informed prior are combined with XGBoost residual learning.
+- The pipeline supports both normalized and raw-scale spectral outputs, as well as a separate model-evaluation workflow.
 
-## 方法
+## Method
 
-1. 對訓練光譜進行中值濾波、Savitzky-Golay 平滑處理，以及共同波長網格插值。
-2. 僅使用訓練資料推估峰位、振幅、基線與半高全寬。
-3. 建立依品質加權並對齊峰位的物理資訊先驗模型。
-4. 使用 XGBoost 學習留一法先驗殘差；只有當訓練端交叉驗證結果優於先驗模型時，才啟用殘差模型。
-5. 套用由訓練端交叉驗證決定的半高全寬處理方式，輸出正規化與原始尺度的預測結果。
+1. Apply median filtering, Savitzky-Golay smoothing, and interpolation onto a common wavelength grid to the training spectra.
+2. Estimate the peak position, amplitude, baseline, and FWHM using only the training data.
+3. Build a quality-weighted, peak-aligned physics-informed prior.
+4. Use XGBoost to learn the leave-one-out prior residuals. The residual model is enabled only when it outperforms the prior during training-side cross-validation.
+5. Apply the FWHM strategy selected by training-side cross-validation and generate both normalized and raw-scale predictions.
 
-拉丁超立方抽樣（LHS）用於交叉驗證的超參數搜尋；若要快速執行，可設定 `--lhs-samples 0` 使用固定參數。
+Latin hypercube sampling (LHS) is used for cross-validated hyperparameter search. For a faster run, set `--lhs-samples 0` to use fixed parameters.
 
-## 安裝
+## Installation
 
 ```bash
 python -m venv .venv
@@ -29,9 +29,9 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-## 資料夾格式
+## Dataset Directory Structure
 
-本程式碼倉庫不包含資料。`--data-root` 應指向原始的「訓練資料集」資料夾；程式預期其中包含以下四組子資料夾：
+The data is not included in this repository. `--data-root` must point to the root directory of the original training dataset. The program expects the following four subdirectories. These directory names are part of the dataset layout and must not be translated or renamed:
 
 ```text
 <data-root>/
@@ -43,35 +43,35 @@ pip install -r requirements.txt
    └─ CS_pH值(7-11 pH)/
 ```
 
-每個文字檔應包含兩個數值欄位：波長（wavelength）與強度（intensity）。
+Each text file must contain two numeric columns: wavelength and intensity.
 
-## 執行
+## Usage
 
-一次執行全部四組資料：
-
-```bash
-python train.py --data-root "C:\path\to\訓練資料集" --dataset all
-```
-
-只執行一組資料，並使用 GPU：
+Run all four datasets:
 
 ```bash
-python train.py --data-root "C:\path\to\訓練資料集" --dataset PH-SHELL --device cuda
+python train.py --data-root "C:\path\to\training-dataset" --dataset all
 ```
 
-只輸出預測結果：
+Run one dataset with a GPU:
 
 ```bash
-python train.py --data-root "C:\path\to\訓練資料集" --dataset PH-SHELL --no-evaluate
+python train.py --data-root "C:\path\to\training-dataset" --dataset PH-SHELL --device cuda
 ```
 
-產出檔案會寫入 `outputs/<dataset>/`，該目錄已由 `.gitignore` 排除。GitHub 只需上傳本目錄內的程式碼與說明文件，不需上傳資料、圖片或執行結果。
+Generate predictions without running evaluation:
 
-## 測試
+```bash
+python train.py --data-root "C:\path\to\training-dataset" --dataset PH-SHELL --no-evaluate
+```
+
+Generated files are written to `outputs/<dataset>/`, which is excluded by `.gitignore`. Only the source code and documentation in this repository need to be uploaded to GitHub; do not upload the data, images, or generated outputs.
+
+## Testing
 
 ```bash
 pip install -r requirements-dev.txt
 pytest -q
 ```
 
-測試涵蓋主要的訓練與預測介面。
+The tests cover the main training and prediction interfaces.
